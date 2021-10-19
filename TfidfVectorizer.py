@@ -59,7 +59,8 @@ class TfidfVectorizer(object):
     """
     
     self.vocabulary = set()
-    self.ngrams_count = Counter()
+    self.ngrams_count = Counter()  # for term frequency
+    self.doc_count = Counter()     # for document frequency
     clean_corpus = list()
     for document in corpus:
       # remove recurrent spaces
@@ -72,7 +73,10 @@ class TfidfVectorizer(object):
 
       # create ngrams for later featurization
       for n in range(self.ngram_range[0], self.ngram_range[1]+1):
-        self.ngrams_count.update(self.create_ngrams(tokens, n))
+        ngrams = self.create_ngrams(tokens, n)
+        self.ngrams_count.update(ngrams)
+        self.doc_count.update(set(ngrams))
+
       # create vocabulary
       self.vocabulary.update(tokens)
       clean_corpus.append(' '.join(tokens))
@@ -93,7 +97,7 @@ class TfidfVectorizer(object):
     min_df_thres = self.min_df if type(self.min_df) is int else int(self.min_df*len(corpus))
     max_df_thres = self.max_df if type(self.max_df) is int else int(self.max_df*len(corpus))
     for phrase in self.ngrams_count.keys():
-      doc_count = sum([1 for document in self.clean_corpus if re.search('\\b%s\\b'%phrase, document)])
+      doc_count = self.doc_count.get(phrase, 0)
       if doc_count >= min_df_thres and doc_count <= max_df_thres:
         # calculate idf score 
         self.idf_score[phrase] = (math.log((1+len(corpus))/(doc_count+1)) +1)
@@ -118,7 +122,7 @@ class TfidfVectorizer(object):
         feat_count = len(re.findall('\\b%s\\b'%feat, document))
         if feat_count > 0:
           # calculate the term frequency ratio score
-          total_count = len(self.create_ngrams(document.split(), len(feat.split())))
+          total_count = len(document.split()) - len(feat.split()) + 1.0
           tf_score = feat_count / total_count
           row_i.append(di)
           col_i.append(fi)
