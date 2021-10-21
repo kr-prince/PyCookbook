@@ -140,7 +140,8 @@ class BM25PlusVectorizer(object):
     Transforms the given query corpus, based on the features formed over fitted corpus
     
     Parameter(s):
-      None
+      query_corpus : list of strings, or token list, where each sub-list element is considered a document.
+                      This document has to be vectorized based on the fitted document.
     """
     
     assert hasattr(self, 'features'), "BM25+ Vectorizer has to be fitted first, run fit() method."
